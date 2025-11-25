@@ -292,9 +292,8 @@ This project is licensed under the MIT License.
 ## 👨‍💻 Author
 
 **Chamari Abesinghe**  
-Senior Water Engineer & Blockchain Developer  
-National Water Company, Riyadh, Saudi Arabia
-
+Computer Science Student 
+University of Central Florida
 ---
 
 ## 🙏 Acknowledgments
