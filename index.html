@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Access Control System</title>
+    <!-- Ethers.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 1.1rem;
+        }
+        
+        /* Connection Status */
+        .connection-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4444;
+        }
+        
+        .status-dot.connected {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,212,255,0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Contract Info */
+        .contracts-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .contract-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .contract-name {
+            font-weight: 600;
+            color: #00d4ff;
+        }
+        
+        .contract-address {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .contract-address a {
+            color: #00d4ff;
+            text-decoration: none;
+        }
+        
+        .contract-address a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: rgba(0,212,255,0.2);
+            color: #00d4ff;
+        }
+        
+        .tab:hover {
+            color: #fff;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Forms */
+        .form-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .form-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #00d4ff;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+        
+        .form-group input::placeholder {
+            color: #666;
+        }
+        
+        /* Results Panel */
+        .results-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .results-title {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 15px;
+        }
+        
+        .result-item {
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        .result-success {
+            border-left: 3px solid #00ff88;
+        }
+        
+        .result-error {
+            border-left: 3px solid #ff4444;
+        }
+        
+        .result-info {
+            border-left: 3px solid #00d4ff;
+        }
+        
+        /* Activity Log */
+        .activity-log {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+        }
+        
+        .log-time {
+            color: #666;
+            font-size: 0.8rem;
+        }
+        
+        /* Grid Layout */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .contract-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #00d4ff;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Blockchain Access Control</h1>
+            <p class="subtitle">Decentralized Role-Based Access Control on Ethereum</p>
+        </header>
+        
+        <!-- Connection Panel -->
+        <div class="connection-panel">
+            <div class="status-row">
+                <div class="status-item">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="connectionStatus">Not Connected</span>
+                </div>
+                <div class="status-item">
+                    <span id="networkName">-</span>
+                </div>
+                <div class="status-item">
+                    <span id="walletAddress">-</span>
+                </div>
+                <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">
+                    Connect MetaMask
+                </button>
+            </div>
+        </div>
+        
+        <!-- Contract Addresses -->
+        <div class="contracts-panel">
+            <h3 style="margin-bottom: 15px;">📋 Deployed Contracts (Sepolia Testnet)</h3>
+            <div class="contract-item">
+                <span class="contract-name">AccessControlManager</span>
+                <span class="contract-address">
+                    <a href="https://sepolia.etherscan.io/address/0x88cBDa5EEB8E1e552Bdde51Bbe7B4D707721EebF" target="_blank">
+                        0x88cBDa5EEB8E1e552Bdde51Bbe7B4D707721EebF
+                    </a>
+                </span>
+            </div>
+            <div class="contract-item">
+                <span class="contract-name">PolicyRegistry</span>
+                <span class="contract-address">
+                    <a href="https://sepolia.etherscan.io/address/0x6f8ab7382cc2Bc481b603Db040Ba45E409236285" target="_blank">
+                        0x6f8ab7382cc2Bc481b603Db040Ba45E409236285
+                    </a>
+                </span>
+            </div>
+            <div class="contract-item">
+                <span class="contract-name">RoleHierarchy</span>
+                <span class="contract-address">
+                    <a href="https://sepolia.etherscan.io/address/0xE1E6376Bfc630844BEc0B58602A0508fa6603223" target="_blank">
+                        0xE1E6376Bfc630844BEc0B58602A0508fa6603223
+                    </a>
+                </span>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('roles')">🎭 Roles</button>
+            <button class="tab" onclick="showTab('permissions')">🔑 Permissions</button>
+            <button class="tab" onclick="showTab('users')">👤 Users</button>
+            <button class="tab" onclick="showTab('query')">🔍 Query</button>
+        </div>
+        
+        <!-- Roles Tab -->
+        <div id="roles-tab" class="tab-content active">
+            <div class="grid-2">
+                <div class="form-panel">
+                    <h3 class="form-title">Create New Role</h3>
+                    <div class="form-group">
+                        <label>Role Name</label>
+                        <input type="text" id="newRoleName" placeholder="e.g., Administrator, Manager, Viewer">
+                    </div>
+                    <button class="btn btn-primary" onclick="createRole()" id="createRoleBtn">
+                        Create Role
+                    </button>
+                </div>
+                
+                <div class="form-panel">
+                    <h3 class="form-title">Grant Role to User</h3>
+                    <div class="form-group">
+                        <label>Role Name</label>
+                        <input type="text" id="grantRoleName" placeholder="e.g., Administrator">
+                    </div>
+                    <div class="form-group">
+                        <label>User Address</label>
+                        <input type="text" id="grantUserAddress" placeholder="0x...">
+                    </div>
+                    <button class="btn btn-primary" onclick="grantRole()">
+                        Grant Role
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-panel">
+                <h3 class="form-title">Revoke Role from User</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Role Name</label>
+                        <input type="text" id="revokeRoleName" placeholder="e.g., Administrator">
+                    </div>
+                    <div class="form-group">
+                        <label>User Address</label>
+                        <input type="text" id="revokeUserAddress" placeholder="0x...">
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="revokeRole()">
+                    Revoke Role
+                </button>
+            </div>
+        </div>
+        
+        <!-- Permissions Tab -->
+        <div id="permissions-tab" class="tab-content">
+            <div class="grid-2">
+                <div class="form-panel">
+                    <h3 class="form-title">Add Permission to Role</h3>
+                    <div class="form-group">
+                        <label>Role Name</label>
+                        <input type="text" id="permRoleName" placeholder="e.g., Administrator">
+                    </div>
+                    <div class="form-group">
+                        <label>Resource</label>
+                        <input type="text" id="permResource" placeholder="e.g., database, files, users">
+                    </div>
+                    <div class="form-group">
+                        <label>Action</label>
+                        <input type="text" id="permAction" placeholder="e.g., read, write, delete">
+                    </div>
+                    <button class="btn btn-primary" onclick="addPermission()">
+                        Add Permission
+                    </button>
+                </div>
+                
+                <div class="form-panel">
+                    <h3 class="form-title">Remove Permission from Role</h3>
+                    <div class="form-group">
+                        <label>Role Name</label>
+                        <input type="text" id="removePermRoleName" placeholder="e.g., Administrator">
+                    </div>
+                    <div class="form-group">
+                        <label>Resource</label>
+                        <input type="text" id="removePermResource" placeholder="e.g., database">
+                    </div>
+                    <div class="form-group">
+                        <label>Action</label>
+                        <input type="text" id="removePermAction" placeholder="e.g., write">
+                    </div>
+                    <button class="btn btn-secondary" onclick="removePermission()">
+                        Remove Permission
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users Tab -->
+        <div id="users-tab" class="tab-content">
+            <div class="grid-2">
+                <div class="form-panel">
+                    <h3 class="form-title">Deactivate User</h3>
+                    <div class="form-group">
+                        <label>User Address</label>
+                        <input type="text" id="deactivateAddress" placeholder="0x...">
+                    </div>
+                    <button class="btn btn-secondary" onclick="deactivateUser()">
+                        Deactivate User
+                    </button>
+                </div>
+                
+                <div class="form-panel">
+                    <h3 class="form-title">Reactivate User</h3>
+                    <div class="form-group">
+                        <label>User Address</label>
+                        <input type="text" id="reactivateAddress" placeholder="0x...">
+                    </div>
+                    <button class="btn btn-primary" onclick="reactivateUser()">
+                        Reactivate User
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Query Tab -->
+        <div id="query-tab" class="tab-content">
+            <div class="grid-2">
+                <div class="form-panel">
+                    <h3 class="form-title">Check User Role</h3>
+                    <div class="form-group">
+                        <label>Role Name</label>
+                        <input type="text" id="checkRoleName" placeholder="e.g., Administrator">
+                    </div>
+                    <div class="form-group">
+                        <label>User Address</label>
+                        <input type="text" id="checkRoleAddress" placeholder="0x...">
+                    </div>
+                    <button class="btn btn-primary" onclick="checkHasRole()">
+                        Check Role
+                    </button>
+                </div>
+                
+                <div class="form-panel">
+                    <h3 class="form-title">Check Permission</h3>
+                    <div class="form-group">
+                        <label>User Address</label>
+                        <input type="text" id="checkPermAddress" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label>Resource</label>
+                        <input type="text" id="checkPermResource" placeholder="e.g., database">
+                    </div>
+                    <div class="form-group">
+                        <label>Action</label>
+                        <input type="text" id="checkPermAction" placeholder="e.g., read">
+                    </div>
+                    <button class="btn btn-primary" onclick="checkPermission()">
+                        Check Permission
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid-2">
+                <div class="form-panel">
+                    <h3 class="form-title">Get User Roles</h3>
+                    <div class="form-group">
+                        <label>User Address</label>
+                        <input type="text" id="getUserRolesAddress" placeholder="0x...">
+                    </div>
+                    <button class="btn btn-primary" onclick="getUserRoles()">
+                        Get Roles
+                    </button>
+                </div>
+                
+                <div class="form-panel">
+                    <h3 class="form-title">Get All Roles</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Retrieve all roles in the system</p>
+                    <button class="btn btn-primary" onclick="getAllRoles()">
+                        Get All Roles
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <h3 class="results-title">📜 Activity Log</h3>
+            <div class="activity-log" id="activityLog">
+                <div class="log-entry">
+                    <span class="log-time">[System]</span> Ready. Connect your MetaMask wallet to begin.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Contract Configuration - YOUR DEPLOYED ADDRESSES
+        const CONFIG = {
+            AccessControlManager: "0x88cBDa5EEB8E1e552Bdde51Bbe7B4D707721EebF",
+            PolicyRegistry: "0x6f8ab7382cc2Bc481b603Db040Ba45E409236285",
+            RoleHierarchy: "0xE1E6376Bfc630844BEc0B58602A0508fa6603223",
+            chainId: 11155111 // Sepolia
+        };
+        
+        // Contract ABI (simplified)
+        const ABI = [
+            "function createRole(bytes32 roleId, string memory name) external",
+            "function grantRole(bytes32 roleId, address user) external",
+            "function revokeRole(bytes32 roleId, address user) external",
+            "function addPermission(bytes32 roleId, bytes32 permission) external",
+            "function removePermission(bytes32 roleId, bytes32 permission) external",
+            "function hasRole(bytes32 roleId, address user) external view returns (bool)",
+            "function checkPermission(address user, bytes32 resource, bytes32 action) external view returns (bool)",
+            "function getUserRoles(address user) external view returns (bytes32[])",
+            "function getRolePermissions(bytes32 roleId) external view returns (bytes32[])",
+            "function getAllRoles() external view returns (bytes32[])",
+            "function getUserInfo(address user) external view returns (bool isActive, uint256 addedAt, uint256 roleCount)",
+            "function deactivateUser(address user) external",
+            "function reactivateUser(address user) external",
+            "event RoleCreated(bytes32 indexed roleId, string name, address indexed creator)",
+            "event RoleGranted(bytes32 indexed roleId, address indexed user, address indexed grantedBy)",
+            "event RoleRevoked(bytes32 indexed roleId, address indexed user, address indexed revokedBy)"
+        ];
+        
+        // Global variables
+        let provider;
+        let signer;
+        let contract;
+        let connected = false;
+        
+        // Connect to MetaMask
+        async function connectWallet() {
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    alert('MetaMask is not installed! Please install MetaMask browser extension.');
+                    return;
+                }
+                
+                logActivity('Connecting to MetaMask...', 'info');
+                
+                // Request account access
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                
+                // Check network
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                if (parseInt(chainId, 16) !== CONFIG.chainId) {
+                    logActivity('Please switch to Sepolia testnet in MetaMask', 'error');
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x' + CONFIG.chainId.toString(16) }],
+                        });
+                    } catch (switchError) {
+                        logActivity('Failed to switch network. Please manually switch to Sepolia.', 'error');
+                        return;
+                    }
+                }
+                
+                // Setup ethers
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                contract = new ethers.Contract(CONFIG.AccessControlManager, ABI, signer);
+                
+                // Update UI
+                const address = accounts[0];
+                document.getElementById('statusDot').classList.add('connected');
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                document.getElementById('networkName').textContent = 'Sepolia Testnet';
+                document.getElementById('walletAddress').textContent = address.slice(0, 6) + '...' + address.slice(-4);
+                document.getElementById('connectBtn').textContent = 'Connected ✓';
+                document.getElementById('connectBtn').disabled = true;
+                
+                connected = true;
+                logActivity(`Connected: ${address}`, 'success');
+                
+                // Listen for account changes
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    window.location.reload();
+                });
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`Connection failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Utility function to create role ID from name
+        function getRoleId(roleName) {
+            return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(roleName));
+        }
+        
+        // Utility function to create permission hash
+        function getPermissionHash(resource, action) {
+            return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(resource + ":" + action));
+        }
+        
+        // Create Role
+        async function createRole() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const roleName = document.getElementById('newRoleName').value.trim();
+            if (!roleName) {
+                alert('Please enter a role name');
+                return;
+            }
+            
+            try {
+                logActivity(`Creating role: ${roleName}...`, 'info');
+                const roleId = getRoleId(roleName);
+                const tx = await contract.createRole(roleId, roleName);
+                logActivity(`Transaction sent: ${tx.hash}`, 'info');
+                
+                await tx.wait();
+                logActivity(`✅ Role "${roleName}" created successfully!`, 'success');
+                document.getElementById('newRoleName').value = '';
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Grant Role
+        async function grantRole() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const roleName = document.getElementById('grantRoleName').value.trim();
+            const userAddress = document.getElementById('grantUserAddress').value.trim();
+            
+            if (!roleName || !userAddress) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                logActivity(`Granting role "${roleName}" to ${userAddress}...`, 'info');
+                const roleId = getRoleId(roleName);
+                const tx = await contract.grantRole(roleId, userAddress);
+                logActivity(`Transaction sent: ${tx.hash}`, 'info');
+                
+                await tx.wait();
+                logActivity(`✅ Role granted successfully!`, 'success');
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Revoke Role
+        async function revokeRole() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const roleName = document.getElementById('revokeRoleName').value.trim();
+            const userAddress = document.getElementById('revokeUserAddress').value.trim();
+            
+            if (!roleName || !userAddress) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                logActivity(`Revoking role "${roleName}" from ${userAddress}...`, 'info');
+                const roleId = getRoleId(roleName);
+                const tx = await contract.revokeRole(roleId, userAddress);
+                logActivity(`Transaction sent: ${tx.hash}`, 'info');
+                
+                await tx.wait();
+                logActivity(`✅ Role revoked successfully!`, 'success');
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Add Permission
+        async function addPermission() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const roleName = document.getElementById('permRoleName').value.trim();
+            const resource = document.getElementById('permResource').value.trim();
+            const action = document.getElementById('permAction').value.trim();
+            
+            if (!roleName || !resource || !action) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                logActivity(`Adding permission ${resource}:${action} to role "${roleName}"...`, 'info');
+                const roleId = getRoleId(roleName);
+                const permissionHash = getPermissionHash(resource, action);
+                const tx = await contract.addPermission(roleId, permissionHash);
+                logActivity(`Transaction sent: ${tx.hash}`, 'info');
+                
+                await tx.wait();
+                logActivity(`✅ Permission added successfully!`, 'success');
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Remove Permission
+        async function removePermission() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const roleName = document.getElementById('removePermRoleName').value.trim();
+            const resource = document.getElementById('removePermResource').value.trim();
+            const action = document.getElementById('removePermAction').value.trim();
+            
+            if (!roleName || !resource || !action) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                logActivity(`Removing permission ${resource}:${action} from role "${roleName}"...`, 'info');
+                const roleId = getRoleId(roleName);
+                const permissionHash = getPermissionHash(resource, action);
+                const tx = await contract.removePermission(roleId, permissionHash);
+                logActivity(`Transaction sent: ${tx.hash}`, 'info');
+                
+                await tx.wait();
+                logActivity(`✅ Permission removed successfully!`, 'success');
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Check Has Role
+        async function checkHasRole() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const roleName = document.getElementById('checkRoleName').value.trim();
+            const userAddress = document.getElementById('checkRoleAddress').value.trim();
+            
+            if (!roleName || !userAddress) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                logActivity(`Checking if ${userAddress} has role "${roleName}"...`, 'info');
+                const roleId = getRoleId(roleName);
+                const hasRole = await contract.hasRole(roleId, userAddress);
+                
+                if (hasRole) {
+                    logActivity(`✅ User HAS the role "${roleName}"`, 'success');
+                } else {
+                    logActivity(`❌ User does NOT have the role "${roleName}"`, 'info');
+                }
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Check Permission
+        async function checkPermission() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const userAddress = document.getElementById('checkPermAddress').value.trim();
+            const resource = document.getElementById('checkPermResource').value.trim();
+            const action = document.getElementById('checkPermAction').value.trim();
+            
+            if (!userAddress || !resource || !action) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                logActivity(`Checking permission ${resource}:${action} for ${userAddress}...`, 'info');
+                const resourceHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(resource));
+                const actionHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(action));
+                const hasPermission = await contract.checkPermission(userAddress, resourceHash, actionHash);
+                
+                if (hasPermission) {
+                    logActivity(`✅ User HAS permission: ${resource}:${action}`, 'success');
+                } else {
+                    logActivity(`❌ User does NOT have permission: ${resource}:${action}`, 'info');
+                }
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Get User Roles
+        async function getUserRoles() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const userAddress = document.getElementById('getUserRolesAddress').value.trim();
+            
+            if (!userAddress) {
+                alert('Please enter a user address');
+                return;
+            }
+            
+            try {
+                logActivity(`Getting roles for ${userAddress}...`, 'info');
+                const roles = await contract.getUserRoles(userAddress);
+                
+                if (roles.length === 0) {
+                    logActivity(`User has no roles assigned`, 'info');
+                } else {
+                    logActivity(`User has ${roles.length} role(s):`, 'success');
+                    roles.forEach((roleId, index) => {
+                        logActivity(`  Role ${index + 1}: ${roleId}`, 'info');
+                    });
+                }
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Get All Roles
+        async function getAllRoles() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            try {
+                logActivity(`Getting all roles in the system...`, 'info');
+                const roles = await contract.getAllRoles();
+                
+                if (roles.length === 0) {
+                    logActivity(`No roles exist in the system yet`, 'info');
+                } else {
+                    logActivity(`Found ${roles.length} role(s):`, 'success');
+                    roles.forEach((roleId, index) => {
+                        logActivity(`  Role ${index + 1}: ${roleId}`, 'info');
+                    });
+                }
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Deactivate User
+        async function deactivateUser() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const userAddress = document.getElementById('deactivateAddress').value.trim();
+            
+            if (!userAddress) {
+                alert('Please enter a user address');
+                return;
+            }
+            
+            try {
+                logActivity(`Deactivating user ${userAddress}...`, 'info');
+                const tx = await contract.deactivateUser(userAddress);
+                logActivity(`Transaction sent: ${tx.hash}`, 'info');
+                
+                await tx.wait();
+                logActivity(`✅ User deactivated successfully!`, 'success');
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Reactivate User
+        async function reactivateUser() {
+            if (!connected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+            
+            const userAddress = document.getElementById('reactivateAddress').value.trim();
+            
+            if (!userAddress) {
+                alert('Please enter a user address');
+                return;
+            }
+            
+            try {
+                logActivity(`Reactivating user ${userAddress}...`, 'info');
+                const tx = await contract.reactivateUser(userAddress);
+                logActivity(`Transaction sent: ${tx.hash}`, 'info');
+                
+                await tx.wait();
+                logActivity(`✅ User reactivated successfully!`, 'success');
+                
+            } catch (error) {
+                console.error(error);
+                logActivity(`❌ Error: ${error.reason || error.message}`, 'error');
+            }
+        }
+        
+        // Activity Log
+        function logActivity(message, type = 'info') {
+            const log = document.getElementById('activityLog');
+            const time = new Date().toLocaleTimeString();
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            let icon = '';
+            if (type === 'success') icon = '✅';
+            else if (type === 'error') icon = '❌';
+            else icon = 'ℹ️';
+            
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${icon} ${message}`;
+            log.insertBefore(entry, log.firstChild);
+        }
+        
+        // Check if MetaMask is installed on page load
+        window.addEventListener('load', () => {
+            if (typeof window.ethereum !== 'undefined') {
+                logActivity('MetaMask detected. Click "Connect MetaMask" to begin.', 'info');
+            } else {
+                logActivity('MetaMask not detected. Please install MetaMask extension.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
